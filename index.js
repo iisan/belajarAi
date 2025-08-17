@@ -10,6 +10,7 @@ const app = express();
 // Middleware to parse JSON and handle CORS
 app.use(cors()); //buat cross-origin resource sharing
 app.use(express.json()); //membolehkan parsing JSON dalam request body
+app.use(express.static("public")); // Serve static files from the 'public' directory
 // The client gets the API key from the environment variable `GEMINI_API_KEY`.
 const ai = new GoogleGenAI({});
 
@@ -19,16 +20,35 @@ app.post("/chat", async (req, res) => {
 		return res.status(400).json({ error: "Request Body are required" });
 	}
 
-	const {prompt} = req.body;
+	const messages = req.body.prompt;
 
-	if(!prompt) {
+
+	// Validate that messages are provided
+	// messages should be an array of objects with 'role' and 'content'
+	// if(!messages || !Array.isArray(messages) || messages.length === 0) {
+	// 	return res.status(400).send('Invalid or missing messages array');
+	// }
+
+	console.log(messages);
+	console.log(req.body.prompt);
+	
+	if(!messages) {
 		return res.status(400).json({ error: "Tidak ada prompt" });
 	}
 
+	const contents = messages;
+ 	// const contents = messages.map(message => {
+	// 	return {
+	// 		role: message.role || "user", // Default to 'user' if role is not specified
+	// 		content: message.content || "" // Default to empty string if content is not specified
+	// 	};
+	// });
+
+
 	try {
 		const response = await ai.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents: prompt,
+			model: "gemini-2.0-flash",
+			contents: contents,
 		});
 		return res.status(200).send(response.text || "No response text available");
 	} catch (error) {
